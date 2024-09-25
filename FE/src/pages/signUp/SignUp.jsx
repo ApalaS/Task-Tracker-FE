@@ -1,13 +1,32 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useAuth } from "../../provider/authProvider";
 import "../../styles/FormStyles.css";
 
 const SignUp = () => {
-    const [name, setName] = useState("");
+    const { setToken } = useAuth();
+    const navigate = useNavigate();
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
+    const [isDarkMode, setIsDarkMode] = useState(false);
   
+    useEffect(() => {
+      const theme = JSON.parse(localStorage.getItem("isDarkMode"));
+      if (theme) {
+        document.body.classList.add("dark-mode");
+        setIsDarkMode(true);
+      }
+    }, []);
+    const toggleTheme = () => {
+      setIsDarkMode(!isDarkMode);
+      localStorage.setItem("isDarkMode", JSON.stringify(!isDarkMode));
+      document.body.classList.toggle("dark-mode");
+    };
+
     const validateEmail = (email) => {
       const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return re.test(String(email).toLowerCase());
@@ -18,7 +37,7 @@ const SignUp = () => {
       setErrorMessage("");
   
       // Validate input
-      if (name.trim() === "") {
+      if (username.trim() === "") {
         setErrorMessage("Name is required");
         return;
       }
@@ -32,18 +51,19 @@ const SignUp = () => {
         setErrorMessage("Password must be at least 6 characters long");
         return;
       }
+      if (password !== confirmPassword) {
+        setErrorMessage("Passwords do not match");
+        return;
+      }
   
       try {
         // Make the request to sign up
-        const response = await axios.post("/api/signup", { name, email, password });
-  
-        // If successful, store the JWT token in HttpOnly cookie via server
+        const response = await axios.post("/api/signup", { username, email, password });
+
         if (response.data.token) {
-          // Set JWT Token using httpOnly cookie on the server
-          Cookies.set("token", response.data.token, { secure: true, sameSite: "strict", expires: 7 });
-  
-          // Redirect user or show success message
-          window.location.href = "/dashboard"; // Example redirect
+
+          setToken(response.data.token);
+          navigate('/home', {replace: true})
         }
       } catch (error) {
         setErrorMessage("Error signing up, please try again");
@@ -92,17 +112,17 @@ const SignUp = () => {
             />
           </div>
           <div className="form-footer">
-            <a href="/signin">Already have an account? Sign In</a>
+            <Link to="/signin">Already have an account? Sign In</Link>
           </div>
           {errorMessage && <p className="error-message">{errorMessage}</p>}
           <button type="submit">Submit</button>
         </form>
-        <div className="toggle-theme">
+      </div>
+      <div className="toggle-theme">
           <button className="toggle-theme-button" onClick={toggleTheme}>
             <div className="icon"></div>
           </button>
         </div>
-      </div>
     </div>
   );
 };

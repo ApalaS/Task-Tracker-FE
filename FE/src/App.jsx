@@ -1,12 +1,12 @@
 // import './App.css'
-import SignUp from './pages/signUp/SignUp'
-import SignIn from './pages/signIn/SignIn'
+import Routes from './routes'
+import AuthProvider from './provider/authProvider'
 
 function App() {
   return (
-    <>
-      <SignIn />
-    </>
+    <AuthProvider>
+      <Routes />
+    </AuthProvider>
   )
 }
 

@@ -1,12 +1,30 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useAuth } from "../../provider/authProvider";
 import "../../styles/FormStyles.css";
 
 const SignIn = () => {
+    const {setToken} = useAuth();
+    const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
-  
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    useEffect(() => {
+      const theme = JSON.parse(localStorage.getItem("isDarkMode"));
+      if (theme) {
+        document.body.classList.add("dark-mode");
+        setIsDarkMode(true);
+      }
+    }, []);
+    const toggleTheme = () => {
+      setIsDarkMode(!isDarkMode);
+      localStorage.setItem("isDarkMode", JSON.stringify(!isDarkMode));
+      document.body.classList.toggle("dark-mode");
+    };
+
     const validateEmail = (email) => {
       const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return re.test(String(email).toLowerCase());
@@ -31,13 +49,9 @@ const SignIn = () => {
         // Make the request to sign in
         const response = await axios.post("/api/signin", { email, password });
   
-        // If successful, store the JWT token in HttpOnly cookie via server
         if (response.data.token) {
-          // Set JWT Token using httpOnly cookie on the server
-          Cookies.set("token", response.data.token, { secure: true, sameSite: "strict", expires: 7 });
-  
-          // Redirect user or show success message
-          window.location.href = "/dashboard"; // Example redirect
+          setToken( response.data.token);
+          navigate('/',{replace: true});
         }
       } catch (error) {
         setErrorMessage("Invalid email or password");
@@ -70,15 +84,15 @@ const SignIn = () => {
           {errorMessage && <p className="error-message">{errorMessage}</p>}
           <button type="submit">Submit</button>
           <div className="form-footer">
-            <a href="/signup">Don't have an account? Sign Up</a>
+            <Link to="/signup">Don't have an account? Sign Up</Link>
           </div>
         </form>
-        <div className="toggle-theme">
+      </div>
+      <div className="toggle-theme">
           <button onClick={toggleTheme}>
             <div className="icon"></div>
           </button>
         </div>
-      </div>
     </div>
   );
 };
